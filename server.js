@@ -9,12 +9,12 @@ const session = require('express-session');
 const dbConnection = require('./models/connection');
 const MongoStore = require('connect-mongo')(session)
 const passport = require('./passport');
+const path = require('path')
+
 const PORT = process.env.PORT || 8080;
 
-
-
 // Connect to the Mongo DB
-// mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/reactyardlist");
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/reactyardlist");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -37,7 +37,7 @@ app.use(bodyParser.json())
 app.use(
 	session({
 		secret: 'squirrel', //pick a random string to make the hash that is generated secure
-		store: new MongoStore({ mongooseConnection: dbConnection}),
+		store: new MongoStore({ mongooseConnection: dbConnection }),
 		resave: false,
 		saveUninitialized: false
 	})
@@ -53,7 +53,13 @@ app.use(passport.session()) // calls the deserializeUser
 app.use(routes);
 app.use('/user', user)
 
+if (process.env.NODE_ENV === 'production') {
+	app.use(express.static('client/build'));
+	app.get('*', (req, res) => {
+		res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+	})
+}
 // Start the API server
-app.listen(PORT, function() {
-  console.log(`🌎  ==> API Server now listening on PORT ${PORT}!`);
+app.listen(PORT, function () {
+	console.log(`🌎  ==> API Server now listening on PORT ${PORT}!`);
 });
